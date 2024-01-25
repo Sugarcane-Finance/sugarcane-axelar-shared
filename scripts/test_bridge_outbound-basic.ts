@@ -42,9 +42,9 @@ async function main() {
   const chainDetails_Sepolia = {
     name: "ethereum-sepolia",
     chainId: 11155111,
-    accountRegistry: "0x0000000000000000000000000000000000000000",
-    outbound: "0xAe9a44737c01FD342D4A976bBbEf4991eFCCcf20",
-    inbound: "0x220ccbcbAd6E8975D9d150B9eb6Ab48E44138f25",
+    accountRegistry: "0xB076148D69E250A70642E0D8084B9008aCaaA89c",
+    outbound: "0x948b90363cB1483236Ff1bb04f5c05Afa00548F8",
+    inbound: "0xE3aB6bc34c608b9507A4d02bE48B08c0d78Cc690",
     aUSDC: "0x254d06f33bdc5b8ee05b2ea472107e300226659a",
     inputAmount: 1.2,
     gasToken: GasToken.ETH,
@@ -52,9 +52,9 @@ async function main() {
   const chainDetails_Mumbai = {
     name: "Polygon",
     chainId: 80001,
-    accountRegistry: "0x0000000000000000000000000000000000000000",
-    outbound: "0x5430ae90Ed80ba573b9CF12C705EF06C2a3DDeB9",
-    inbound: "0x03c03fe4cf1eb286d74f38ad51151473B3F46350",
+    accountRegistry: "0xDcc16a951053515c0075A56cCEcDF7f3E6Eefa8f",
+    outbound: "0x661f798Dabe691691a9E0Cf77B93dA9B06b93145",
+    inbound: "0xdc799685eDe8b6F9153c5A3bb21cE7D8403cDa60",
     aUSDC: "0x2c852e740B62308c46DD29B982FBb650D063Bd07",
     inputAmount: 1.2,
     gasToken: GasToken.MATIC,
@@ -183,141 +183,77 @@ async function main() {
   let bridgeTx = null;
   let bridgePayload = null;
 
-  if (isFantomToMumbaiRoute) {
-    // // // // // // // // // // // // // // // // // // // //
-    // SET THE ASSET STORAGE SLOT TO MOVE THE ASSETS
-    // // // // // // // // // // // // // // // // // // // //
+  // // // // // // // // // // // // // // // // // // // //
+  // SET THE ASSET STORAGE SLOT TO MOVE THE ASSETS
+  // // // // // // // // // // // // // // // // // // // //
 
-    const { assetStorageAddress } = await handleAssetStorageSlotApproval({
-      deployer,
-      accountRegistryContractAddress,
-      outboundMailboxContractAddress,
-      sourceTokenAddress,
-      sugarcaneId,
-      inputTokenAmountWithDecimals,
-    });
+  const { assetStorageAddress } = await handleAssetStorageSlotApproval({
+    deployer,
+    accountRegistryContractAddress,
+    outboundMailboxContractAddress,
+    sourceTokenAddress,
+    sugarcaneId,
+    inputTokenAmountWithDecimals,
+  });
 
-    // // // // // // // // // // // // // // // // // // // //
-    // SEND TOKENS TO ASSET STORAGE SLOT 0
-    // // // // // // // // // // // // // // // // // // // //
+  // // // // // // // // // // // // // // // // // // // //
+  // SEND TOKENS TO ASSET STORAGE SLOT 0
+  // // // // // // // // // // // // // // // // // // // //
 
-    // Send the tokens to the asset storage slot
-    const transferTx = await sourceTokenContract.transfer(
-      assetStorageAddress,
-      inputTokenAmountWithDecimals
-    );
-    await transferTx.wait();
+  // Send the tokens to the asset storage slot
+  const transferTx = await sourceTokenContract.transfer(
+    assetStorageAddress,
+    inputTokenAmountWithDecimals
+  );
+  await transferTx.wait();
 
-    console.log("\n-=-=-=- transferTx");
-    console.log(transferTx);
+  console.log("\n-=-=-=- transferTx");
+  console.log(transferTx);
 
-    // // // // // // // // // // // // // // // // // // // //
-    // V1 CHAINS (FANTOM) FORMAT
-    // // // // // // // // // // // // // // // // // // // //
-    bridgePayload = {
-      // bytes32 sugarcaneId,
-      sugarcaneId,
-      // uint256 assetStorageSlotIndex,
-      assetStorageSlotIndex: 0,
-      // uint256 bridgeCost,
-      bridgeCost: bridgeCost,
-      // uint256 inputTokenAmount,
-      inputTokenAmount: inputTokenAmountWithDecimals,
-      // uint256 destinationChainId,
-      destinationChainId: destinationChainId,
-      // bytes memory sourceSwapDataPayload,
-      sourceSwapDataPayload: "0x",
-      // address sourceTokenAddress,
-      sourceTokenAddress: sourceTokenAddress,
-      // address destinationReceiverAddress,
-      destinationReceiverAddress: destinationChainReceiver,
-      // address destinationTokenAddress
-      destinationTokenAddress: destinationTokenAddress,
-    };
+  // // // // // // // // // // // // // // // // // // // //
+  // V1 CHAINS (FANTOM) FORMAT
+  // // // // // // // // // // // // // // // // // // // //
+  bridgePayload = {
+    // bytes32 sugarcaneId,
+    sugarcaneId,
+    // uint256 assetStorageSlotIndex,
+    assetStorageSlotIndex: 0,
+    // uint256 bridgeCost,
+    bridgeCost: bridgeCost,
+    // uint256 inputTokenAmount,
+    inputTokenAmount: inputTokenAmountWithDecimals,
+    // uint256 destinationChainId,
+    destinationChainId: destinationChainId,
+    // bytes memory sourceSwapDataPayload,
+    sourceSwapDataPayload: "0x",
+    // address sourceTokenAddress,
+    sourceTokenAddress: sourceTokenAddress,
+    // address destinationReceiverAddress,
+    destinationReceiverAddress: destinationChainReceiver,
+    // address destinationTokenAddress
+    destinationTokenAddress: destinationTokenAddress,
+  };
 
-    bridgeTx = await outboundMailboxContractv1.bridgeSimple(
-      // bytes32 sugarcaneId,
-      bridgePayload.sugarcaneId,
-      // uint256 assetStorageSlotIndex,
-      bridgePayload.assetStorageSlotIndex,
-      // uint256 bridgeCost,
-      bridgePayload.bridgeCost,
-      // uint256 inputTokenAmount,
-      bridgePayload.inputTokenAmount,
-      // uint256 destinationChainId,
-      bridgePayload.destinationChainId,
-      // bytes memory sourceSwapDataPayload,
-      bridgePayload.sourceSwapDataPayload,
-      // address sourceTokenAddress,
-      bridgePayload.sourceTokenAddress,
-      // address destinationReceiverAddress,
-      bridgePayload.destinationReceiverAddress,
-      // address destinationTokenAddress
-      bridgePayload.destinationTokenAddress
-    );
-  } else {
-    // // // // // // // // // // // // // // // // // // // //
-    // APPROVE OUTBOUND BRIDGE
-    // // // // // // // // // // // // // // // // // // // //
-
-    // First approve the outbound mailbox to move the tokens
-    const ethApproveTx = await sourceTokenContract.approve(
-      outboundMailboxContractAddress,
-      inputTokenAmountWithDecimals
-    );
-    await ethApproveTx.wait();
-
-    console.log("\n-=-=-=- ethApproveTx");
-    console.log(ethApproveTx);
-
-    // // // // // // // // // // // // // // // // // // // //
-    // V0 CHAINS (MUMBAI  & SEPOLIA) HAS A DIFFERENT BRIDGE
-    // // // // // // // // // // // // // // // // // // // //
-
-    bridgePayload = {
-      // bytes32 sugarcaneId,
-      sugarcaneId,
-      // uint256 bridgeCost,
-      bridgeCost: bridgeCost,
-      // uint256 inputTokenAmount,
-      inputTokenAmount: inputTokenAmountWithDecimals,
-      // uint256 destinationChainId,
-      destinationChainId: destinationChainId,
-
-      // bytes memory sourceSwapDataPayload,
-      sourceSwapDataPayload: "0x",
-
-      // address sourceAssetStorageAddress,
-      sourceAssetStorageAddress: sourceChainSender,
-      // address sourceTokenAddress,
-      sourceTokenAddress: sourceTokenAddress,
-      // address destinationReceiverAddress,
-      destinationReceiverAddress: destinationChainReceiver,
-      // address destinationTokenAddress
-      destinationTokenAddress: destinationTokenAddress,
-    };
-
-    bridgeTx = await outboundMailboxContractv0.bridgeSimple(
-      // bytes32 sugarcaneId,
-      bridgePayload.sugarcaneId,
-      // uint256 bridgeCost,
-      bridgePayload.bridgeCost,
-      // uint256 inputTokenAmount,
-      bridgePayload.inputTokenAmount,
-      // uint256 destinationChainId,
-      bridgePayload.destinationChainId,
-      // bytes memory sourceSwapDataPayload,
-      bridgePayload.sourceSwapDataPayload,
-      // address sourceAssetStorageAddress,
-      bridgePayload.sourceAssetStorageAddress,
-      // address sourceTokenAddress,
-      bridgePayload.sourceTokenAddress,
-      // address destinationReceiverAddress,
-      bridgePayload.destinationReceiverAddress,
-      // address destinationTokenAddress
-      bridgePayload.destinationTokenAddress
-    );
-  }
+  bridgeTx = await outboundMailboxContractv1.bridgeSimple(
+    // bytes32 sugarcaneId,
+    bridgePayload.sugarcaneId,
+    // uint256 assetStorageSlotIndex,
+    bridgePayload.assetStorageSlotIndex,
+    // uint256 bridgeCost,
+    bridgePayload.bridgeCost,
+    // uint256 inputTokenAmount,
+    bridgePayload.inputTokenAmount,
+    // uint256 destinationChainId,
+    bridgePayload.destinationChainId,
+    // bytes memory sourceSwapDataPayload,
+    bridgePayload.sourceSwapDataPayload,
+    // address sourceTokenAddress,
+    bridgePayload.sourceTokenAddress,
+    // address destinationReceiverAddress,
+    bridgePayload.destinationReceiverAddress,
+    // address destinationTokenAddress
+    bridgePayload.destinationTokenAddress
+  );
 
   console.log("\n-=-=-=- bridgePayload");
   console.log(bridgePayload);
