@@ -60,6 +60,15 @@ const config = {
         process.env.TEST_USER_PRIVATE_KEY_1,
       ],
     },
+    // Fantom Testnet - Chain Id: 4002
+    testnetChainFantom: {
+      chainId: 4002,
+      url: process.env.TESTNET_RPC_FANTOM,
+      accounts: [
+        process.env.TESTNET_DEPLOYER_PRIVATE_KEY,
+        process.env.TEST_USER_PRIVATE_KEY_1,
+      ],
+    },
   },
   defaultNetwork: "hardhat",
   gasReporter: {

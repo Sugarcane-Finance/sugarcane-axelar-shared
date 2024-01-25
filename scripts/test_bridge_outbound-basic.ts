@@ -3,48 +3,23 @@ import {
   AxelarQueryAPIConfig,
   AxelarQueryAPIFeeResponse,
   Environment,
-  EvmChain,
   GasToken,
 } from "@axelar-network/axelarjs-sdk";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import BigNumber from "bignumber.js";
-import { Contract, ContractRunner, solidityPackedKeccak256 } from "ethers";
+import { solidityPackedKeccak256 } from "ethers";
 import { ethers, hardhatArguments } from "hardhat";
+
+import SugarcaneMailboxOutboundV0Abi from "./imports/SugarcaneMailboxOutboundV0.abi";
+import { SugarcaneMailboxOutboundV0 } from "./imports/SugarcaneMailboxOutboundV0";
 
 import SugarcaneMailboxOutboundV1Abi from "./imports/SugarcaneMailboxOutboundV1.abi";
 import { SugarcaneMailboxOutboundV1 } from "./imports/SugarcaneMailboxOutboundV1";
 
+import { addDecimals, connect, displayCost } from "./helpers";
 import IERC20Abi from "./imports/IERC20.abi";
 import { IERC20 } from "./imports/IERC20";
-
-// // // // // // // // // // // // // // // // // // // //
-// HELPER FUNCTIONS
-// // // // // // // // // // // // // // // // // // // //
-
-const addDecimals = (baseNumber: number, decimals: number) => {
-  return BigNumber(10).pow(decimals).times(baseNumber).toString();
-};
-
-const convertToEth = (wei: string) => {
-  return ethers.formatEther(wei);
-};
-
-const displayCost = (title: string, amount: bigint | string | BigNumber) =>
-  console.log(
-    `   - ${title}:`,
-    convertToEth(amount.toString()),
-    "(",
-    amount,
-    ")"
-  );
-
-const connect = <T>(
-  address: string,
-  abi: any[],
-  runner?: ContractRunner | null
-) => {
-  return new Contract(address, abi, runner) as unknown as T;
-};
+import { handleAssetStorageSlotApproval } from "./assetstorage";
 
 // // // // // // // // // // // // // // // // // // // //
 // MAIN
@@ -55,7 +30,9 @@ async function main() {
 
   [deployer] = addrs;
 
-  const isMumbaiToSepoliaRoute =
+  const isFantomToMumbaiRoute =
+    hardhatArguments.network === "testnetChainFantom";
+  const isMumbaiToFantomRoute =
     hardhatArguments.network === "testnetChainPolygon";
 
   // // // // // // // // // // // // // // // // // // // //
@@ -65,40 +42,65 @@ async function main() {
   const chainDetails_Sepolia = {
     name: "ethereum-sepolia",
     chainId: 11155111,
+    accountRegistry: "0x0000000000000000000000000000000000000000",
     outbound: "0xAe9a44737c01FD342D4A976bBbEf4991eFCCcf20",
+    inbound: "0x220ccbcbAd6E8975D9d150B9eb6Ab48E44138f25",
     aUSDC: "0x254d06f33bdc5b8ee05b2ea472107e300226659a",
+    inputAmount: 1.2,
     gasToken: GasToken.ETH,
   };
   const chainDetails_Mumbai = {
     name: "Polygon",
     chainId: 80001,
+    accountRegistry: "0x0000000000000000000000000000000000000000",
     outbound: "0x5430ae90Ed80ba573b9CF12C705EF06C2a3DDeB9",
+    inbound: "0x03c03fe4cf1eb286d74f38ad51151473B3F46350",
     aUSDC: "0x2c852e740B62308c46DD29B982FBb650D063Bd07",
+    inputAmount: 1.2,
     gasToken: GasToken.MATIC,
   };
-
-  const inputTokenAmount = 1.2;
-  const inputTokenAmountWithDecimals = addDecimals(inputTokenAmount, 6);
+  const chainDetails_Fantom = {
+    name: "Fantom",
+    chainId: 4002,
+    accountRegistry: "0x49BEBB6070A7d5D10eF920271Ce063Afa3635dBb",
+    outbound: "0x4c12567b58F24FBd9E581fa774060d0aaC749eA6",
+    inbound: "0x36bd1ce67918E656c86D88F63E489e7d48fE6B64",
+    aUSDC: "0x75Cc4fDf1ee3E781C1A3Ee9151D5c6Ce34Cf5C61",
+    inputAmount: 0.2,
+    gasToken: GasToken.FTM,
+  };
 
   const sourceChainSender = deployer.address;
   const destinationChainReceiver = deployer.address;
 
-  const sourceChainDetails = isMumbaiToSepoliaRoute
-    ? chainDetails_Mumbai
-    : chainDetails_Sepolia;
+  const sourceChainDetails = isFantomToMumbaiRoute
+    ? chainDetails_Fantom
+    : isMumbaiToFantomRoute
+      ? chainDetails_Mumbai
+      : chainDetails_Sepolia;
 
-  const destinationChainDetails = isMumbaiToSepoliaRoute
-    ? chainDetails_Sepolia
-    : chainDetails_Mumbai;
+  const destinationChainDetails = isFantomToMumbaiRoute
+    ? chainDetails_Mumbai
+    : isMumbaiToFantomRoute
+      ? chainDetails_Fantom
+      : chainDetails_Mumbai;
+
+  const inputTokenAmountWithDecimals = addDecimals(
+    sourceChainDetails.inputAmount,
+    6
+  );
 
   // // // // // // // // // // // // // // // // // // // //
   // CONTRACTS
   // // // // // // // // // // // // // // // // // // // //
 
+  const sugarcaneId = solidityPackedKeccak256(["string"], [deployer.address]);
+
   const sourceChain = sourceChainDetails.name;
   const sourceTokenAddress = sourceChainDetails.aUSDC;
   const sourceGasToken = sourceChainDetails.gasToken;
   const outboundMailboxContractAddress = sourceChainDetails.outbound;
+  const accountRegistryContractAddress = sourceChainDetails.accountRegistry;
 
   const destinationChain = destinationChainDetails.name;
   const destinationChainId = destinationChainDetails.chainId;
@@ -110,7 +112,12 @@ async function main() {
     deployer
   );
 
-  const outboundMailboxContract = connect<SugarcaneMailboxOutboundV1>(
+  const outboundMailboxContractv0 = connect<SugarcaneMailboxOutboundV0>(
+    outboundMailboxContractAddress,
+    SugarcaneMailboxOutboundV0Abi,
+    deployer
+  );
+  const outboundMailboxContractv1 = connect<SugarcaneMailboxOutboundV1>(
     outboundMailboxContractAddress,
     SugarcaneMailboxOutboundV1Abi,
     deployer
@@ -149,17 +156,14 @@ async function main() {
     {
       // showDetailedFees: boolean;
       showDetailedFees: true,
-      // // transferAmount: number; // In terms of symbol, not unit denom, e.g. use 1 for 1 axlUSDC, not 1000000
-      // transferAmount: inputTokenAmount,
-      // // sourceContractAddress: string;
-      // sourceContractAddress: deployedAddresses(chainDetails.chain.name).dapp
-      //   .MAILBOX_OUTBOUND,
-      // // destinationContractAddress: string;
-      // destinationContractAddress: deployedAddresses(
-      //   destinationChainDetails.chain.name
-      // ).dapp.MAILBOX_INBOUND,
+      // transferAmount: number; // In terms of symbol, not unit denom, e.g. use 1 for 1 axlUSDC, not 1000000
+      transferAmount: sourceChainDetails.inputAmount,
+      // sourceContractAddress: string;
+      sourceContractAddress: sourceChainDetails.outbound,
+      // destinationContractAddress: string;
+      destinationContractAddress: destinationChainDetails.inbound,
       // // tokenSymbol: string;
-      // tokenSymbol: chainDetails.axelar.bridgeTokenSymbol,
+      tokenSymbol: destinationTokenAddress,
     } as any
   )) as AxelarQueryAPIFeeResponse;
   const bridgeCost = BigNumber(axelarFeeBreakdown.baseFee)
@@ -173,67 +177,150 @@ async function main() {
   displayCost("bridgeCost", bridgeCost);
 
   // // // // // // // // // // // // // // // // // // // //
-  // APPROVE THE BRIDGE
-  // // // // // // // // // // // // // // // // // // // //
-
-  // First approve the outbound mailbox to move the tokens
-  const ethApproveTx = await sourceTokenContract.approve(
-    outboundMailboxContractAddress,
-    inputTokenAmountWithDecimals
-  );
-  await ethApproveTx.wait();
-
-  console.log("\n-=-=-=- ethApproveTx");
-  console.log(ethApproveTx);
-
-  // // // // // // // // // // // // // // // // // // // //
   // HANDLE THE ACTION
   // // // // // // // // // // // // // // // // // // // //
-  const bridgePayload = {
-    // bytes32 sugarcaneId,
-    sugarcaneId: solidityPackedKeccak256(["string"], ["0x123456789"]),
-    // uint256 bridgeCost,
-    bridgeCost: bridgeCost,
-    // uint256 inputTokenAmount,
-    inputTokenAmount: inputTokenAmountWithDecimals,
-    // uint256 destinationChainId,
-    destinationChainId: destinationChainId,
 
-    // bytes memory sourceSwapDataPayload,
-    sourceSwapDataPayload: "0x",
+  let bridgeTx = null;
+  let bridgePayload = null;
 
-    // address sourceAssetStorageAddress,
-    sourceAssetStorageAddress: sourceChainSender,
-    // address sourceTokenAddress,
-    sourceTokenAddress: sourceTokenAddress,
-    // address destinationReceiverAddress,
-    destinationReceiverAddress: destinationChainReceiver,
-    // address destinationTokenAddress
-    destinationTokenAddress: destinationTokenAddress,
-  };
+  if (isFantomToMumbaiRoute) {
+    // // // // // // // // // // // // // // // // // // // //
+    // SET THE ASSET STORAGE SLOT TO MOVE THE ASSETS
+    // // // // // // // // // // // // // // // // // // // //
+
+    const { assetStorageAddress } = await handleAssetStorageSlotApproval({
+      deployer,
+      accountRegistryContractAddress,
+      outboundMailboxContractAddress,
+      sourceTokenAddress,
+      sugarcaneId,
+      inputTokenAmountWithDecimals,
+    });
+
+    // // // // // // // // // // // // // // // // // // // //
+    // SEND TOKENS TO ASSET STORAGE SLOT 0
+    // // // // // // // // // // // // // // // // // // // //
+
+    // Send the tokens to the asset storage slot
+    const transferTx = await sourceTokenContract.transfer(
+      assetStorageAddress,
+      inputTokenAmountWithDecimals
+    );
+    await transferTx.wait();
+
+    console.log("\n-=-=-=- transferTx");
+    console.log(transferTx);
+
+    // // // // // // // // // // // // // // // // // // // //
+    // V1 CHAINS (FANTOM) FORMAT
+    // // // // // // // // // // // // // // // // // // // //
+    bridgePayload = {
+      // bytes32 sugarcaneId,
+      sugarcaneId,
+      // uint256 assetStorageSlotIndex,
+      assetStorageSlotIndex: 0,
+      // uint256 bridgeCost,
+      bridgeCost: bridgeCost,
+      // uint256 inputTokenAmount,
+      inputTokenAmount: inputTokenAmountWithDecimals,
+      // uint256 destinationChainId,
+      destinationChainId: destinationChainId,
+      // bytes memory sourceSwapDataPayload,
+      sourceSwapDataPayload: "0x",
+      // address sourceTokenAddress,
+      sourceTokenAddress: sourceTokenAddress,
+      // address destinationReceiverAddress,
+      destinationReceiverAddress: destinationChainReceiver,
+      // address destinationTokenAddress
+      destinationTokenAddress: destinationTokenAddress,
+    };
+
+    bridgeTx = await outboundMailboxContractv1.bridgeSimple(
+      // bytes32 sugarcaneId,
+      bridgePayload.sugarcaneId,
+      // uint256 assetStorageSlotIndex,
+      bridgePayload.assetStorageSlotIndex,
+      // uint256 bridgeCost,
+      bridgePayload.bridgeCost,
+      // uint256 inputTokenAmount,
+      bridgePayload.inputTokenAmount,
+      // uint256 destinationChainId,
+      bridgePayload.destinationChainId,
+      // bytes memory sourceSwapDataPayload,
+      bridgePayload.sourceSwapDataPayload,
+      // address sourceTokenAddress,
+      bridgePayload.sourceTokenAddress,
+      // address destinationReceiverAddress,
+      bridgePayload.destinationReceiverAddress,
+      // address destinationTokenAddress
+      bridgePayload.destinationTokenAddress
+    );
+  } else {
+    // // // // // // // // // // // // // // // // // // // //
+    // APPROVE OUTBOUND BRIDGE
+    // // // // // // // // // // // // // // // // // // // //
+
+    // First approve the outbound mailbox to move the tokens
+    const ethApproveTx = await sourceTokenContract.approve(
+      outboundMailboxContractAddress,
+      inputTokenAmountWithDecimals
+    );
+    await ethApproveTx.wait();
+
+    console.log("\n-=-=-=- ethApproveTx");
+    console.log(ethApproveTx);
+
+    // // // // // // // // // // // // // // // // // // // //
+    // V0 CHAINS (MUMBAI  & SEPOLIA) HAS A DIFFERENT BRIDGE
+    // // // // // // // // // // // // // // // // // // // //
+
+    bridgePayload = {
+      // bytes32 sugarcaneId,
+      sugarcaneId,
+      // uint256 bridgeCost,
+      bridgeCost: bridgeCost,
+      // uint256 inputTokenAmount,
+      inputTokenAmount: inputTokenAmountWithDecimals,
+      // uint256 destinationChainId,
+      destinationChainId: destinationChainId,
+
+      // bytes memory sourceSwapDataPayload,
+      sourceSwapDataPayload: "0x",
+
+      // address sourceAssetStorageAddress,
+      sourceAssetStorageAddress: sourceChainSender,
+      // address sourceTokenAddress,
+      sourceTokenAddress: sourceTokenAddress,
+      // address destinationReceiverAddress,
+      destinationReceiverAddress: destinationChainReceiver,
+      // address destinationTokenAddress
+      destinationTokenAddress: destinationTokenAddress,
+    };
+
+    bridgeTx = await outboundMailboxContractv0.bridgeSimple(
+      // bytes32 sugarcaneId,
+      bridgePayload.sugarcaneId,
+      // uint256 bridgeCost,
+      bridgePayload.bridgeCost,
+      // uint256 inputTokenAmount,
+      bridgePayload.inputTokenAmount,
+      // uint256 destinationChainId,
+      bridgePayload.destinationChainId,
+      // bytes memory sourceSwapDataPayload,
+      bridgePayload.sourceSwapDataPayload,
+      // address sourceAssetStorageAddress,
+      bridgePayload.sourceAssetStorageAddress,
+      // address sourceTokenAddress,
+      bridgePayload.sourceTokenAddress,
+      // address destinationReceiverAddress,
+      bridgePayload.destinationReceiverAddress,
+      // address destinationTokenAddress
+      bridgePayload.destinationTokenAddress
+    );
+  }
+
   console.log("\n-=-=-=- bridgePayload");
   console.log(bridgePayload);
-
-  const bridgeTx = await outboundMailboxContract.bridgeSimple(
-    // bytes32 sugarcaneId,
-    bridgePayload.sugarcaneId,
-    // uint256 bridgeCost,
-    bridgePayload.bridgeCost,
-    // uint256 inputTokenAmount,
-    bridgePayload.inputTokenAmount,
-    // uint256 destinationChainId,
-    bridgePayload.destinationChainId,
-    // bytes memory sourceSwapDataPayload,
-    bridgePayload.sourceSwapDataPayload,
-    // address sourceAssetStorageAddress,
-    bridgePayload.sourceAssetStorageAddress,
-    // address sourceTokenAddress,
-    bridgePayload.sourceTokenAddress,
-    // address destinationReceiverAddress,
-    bridgePayload.destinationReceiverAddress,
-    // address destinationTokenAddress
-    bridgePayload.destinationTokenAddress
-  );
 
   await bridgeTx.wait();
 

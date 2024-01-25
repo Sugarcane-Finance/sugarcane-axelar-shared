@@ -11,6 +11,7 @@ import type {
   ContractMethod,
   Listener,
 } from "ethers";
+
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -20,7 +21,7 @@ import type {
   TypedContractMethod,
 } from "./common";
 
-export interface SugarcaneMailboxOutboundV1Interface extends Interface {
+export interface SugarcaneMailboxOutboundV0Interface extends Interface {
   getFunction(
     nameOrSignature:
       | "AS_DAPP_ACCOUNT_REGISTRATION_SIGNER_ADDRESS"
@@ -170,12 +171,12 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
   encodeFunctionData(
     functionFragment: "bridgeSimple",
     values: [
-      BytesLike,
       BigNumberish,
       BigNumberish,
       BigNumberish,
       BigNumberish,
       BytesLike,
+      AddressLike,
       AddressLike,
       AddressLike,
       AddressLike,
@@ -503,8 +504,8 @@ export namespace AddressStoreChangedEvent {
 
 export namespace ExecutedBridgeEvent {
   export type InputTuple = [
-    sugarcaneId: BytesLike,
     messageId: BytesLike,
+    sugarcaneId: BigNumberish,
     bridgeCost: BigNumberish,
     destinationChainId: BigNumberish,
     bridgeTokenBalance: BigNumberish,
@@ -515,8 +516,8 @@ export namespace ExecutedBridgeEvent {
     sourceTokenAddress: AddressLike,
   ];
   export type OutputTuple = [
-    sugarcaneId: string,
     messageId: string,
+    sugarcaneId: bigint,
     bridgeCost: bigint,
     destinationChainId: bigint,
     bridgeTokenBalance: bigint,
@@ -527,8 +528,8 @@ export namespace ExecutedBridgeEvent {
     sourceTokenAddress: string,
   ];
   export interface OutputObject {
-    sugarcaneId: string;
     messageId: string;
+    sugarcaneId: bigint;
     bridgeCost: bigint;
     destinationChainId: bigint;
     bridgeTokenBalance: bigint;
@@ -594,11 +595,11 @@ export namespace UpdatedMailboxChainDetailsEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface SugarcaneMailboxOutboundV1 extends BaseContract {
-  connect(runner?: ContractRunner | null): SugarcaneMailboxOutboundV1;
+export interface SugarcaneMailboxOutboundV0 extends BaseContract {
+  connect(runner?: ContractRunner | null): SugarcaneMailboxOutboundV0;
   waitForDeployment(): Promise<this>;
 
-  interface: SugarcaneMailboxOutboundV1Interface;
+  interface: SugarcaneMailboxOutboundV0Interface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -707,12 +708,12 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
 
   bridgeSimple: TypedContractMethod<
     [
-      sugarcaneId: BytesLike,
-      assetStorageSlotIndex: BigNumberish,
+      sugarcaneId: BigNumberish,
       bridgeCost: BigNumberish,
       inputTokenAmount: BigNumberish,
       destinationChainId: BigNumberish,
       sourceSwapDataPayload: BytesLike,
+      sourceAssetStorageAddress: AddressLike,
       sourceTokenAddress: AddressLike,
       destinationReceiverAddress: AddressLike,
       destinationTokenAddress: AddressLike,
@@ -889,12 +890,12 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
     nameOrSignature: "bridgeSimple"
   ): TypedContractMethod<
     [
-      sugarcaneId: BytesLike,
-      assetStorageSlotIndex: BigNumberish,
+      sugarcaneId: BigNumberish,
       bridgeCost: BigNumberish,
       inputTokenAmount: BigNumberish,
       destinationChainId: BigNumberish,
       sourceSwapDataPayload: BytesLike,
+      sourceAssetStorageAddress: AddressLike,
       sourceTokenAddress: AddressLike,
       destinationReceiverAddress: AddressLike,
       destinationTokenAddress: AddressLike,
@@ -1059,7 +1060,7 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
       AddressStoreChangedEvent.OutputObject
     >;
 
-    "ExecutedBridge(bytes32,bytes32,uint256,uint256,uint256,address,address,address,address,address)": TypedContractEvent<
+    "ExecutedBridge(bytes32,uint256,uint256,uint256,uint256,address,address,address,address,address)": TypedContractEvent<
       ExecutedBridgeEvent.InputTuple,
       ExecutedBridgeEvent.OutputTuple,
       ExecutedBridgeEvent.OutputObject

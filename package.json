@@ -3,8 +3,9 @@
   "description": "Contracts for Sugarcane Axelar Test",
   "version": "1.0.0",
   "scripts": {
-    "axelar-test-ethereum": "npx hardhat run ./scripts/test_bridge_outbound-basic.ts --network testnetChainEthereum",
-    "axelar-test-polygon": "npx hardhat run ./scripts/test_bridge_outbound-basic.ts --network testnetChainPolygon"
+    "sepolia-to-mumbai": "npx hardhat run ./scripts/test_bridge_outbound-basic.ts --network testnetChainEthereum",
+    "mumbai-to-fantom": "npx hardhat run ./scripts/test_bridge_outbound-basic.ts --network testnetChainPolygon",
+    "fantom-to-mumbai": "npx hardhat run ./scripts/test_bridge_outbound-basic.ts --network testnetChainFantom"
   },
   "husky": {
     "hooks": {

@@ -187,14 +187,14 @@ export default [
       {
         indexed: true,
         internalType: "bytes32",
-        name: "sugarcaneId",
+        name: "messageId",
         type: "bytes32",
       },
       {
         indexed: true,
-        internalType: "bytes32",
-        name: "messageId",
-        type: "bytes32",
+        internalType: "uint256",
+        name: "sugarcaneId",
+        type: "uint256",
       },
       {
         indexed: false,
@@ -625,13 +625,8 @@ export default [
   {
     inputs: [
       {
-        internalType: "bytes32",
-        name: "sugarcaneId",
-        type: "bytes32",
-      },
-      {
         internalType: "uint256",
-        name: "assetStorageSlotIndex",
+        name: "sugarcaneId",
         type: "uint256",
       },
       {
@@ -653,6 +648,11 @@ export default [
         internalType: "bytes",
         name: "sourceSwapDataPayload",
         type: "bytes",
+      },
+      {
+        internalType: "address",
+        name: "sourceAssetStorageAddress",
+        type: "address",
       },
       {
         internalType: "address",
