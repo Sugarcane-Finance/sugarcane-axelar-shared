@@ -18,6 +18,9 @@ import IERC20Abi from "./imports/IERC20.abi";
 import { IERC20 } from "./imports/IERC20";
 import { handleAssetStorageSlotApproval } from "./assetstorage";
 
+import { SugarcaneMailboxInboundV1 } from "./imports/SugarcaneMailboxInboundV1";
+import SugarcaneMailboxInboundV1Abi from "./imports/SugarcaneMailboxInboundV1.abi";
+
 // // // // // // // // // // // // // // // // // // // //
 // MAIN
 // // // // // // // // // // // // // // // // // // // //
@@ -42,7 +45,7 @@ async function main() {
     accountRegistry: "0x53bCe44e68b78Ad45B0e6AFd0180621869C71C02",
     outbound: "0x5430ae90Ed80ba573b9CF12C705EF06C2a3DDeB9",
     inbound: "0xbB5384BD691745c32e4b70015082f93a07863FdB",
-    aUSDC: "0x254d06f33bdc5b8ee05b2ea472107e300226659a",
+    bridgingToken: "0x254d06f33bdc5b8ee05b2ea472107e300226659a", // aUSDC
     inputAmount: 1.2,
     gasToken: GasToken.ETH,
   };
@@ -52,7 +55,7 @@ async function main() {
     accountRegistry: "0x24892Fe687E54dbd02042B14F5e03B36E128Ee29",
     outbound: "0x225d0269E07DfeE86B6F34e1c52857BF090C9Cde",
     inbound: "0xf4e0cEb5990645BfbCF24A0D41F97BDa79054E54",
-    aUSDC: "0x2c852e740B62308c46DD29B982FBb650D063Bd07",
+    bridgingToken: "0x2c852e740B62308c46DD29B982FBb650D063Bd07", // aUSDC
     inputAmount: 1.2,
     gasToken: GasToken.MATIC,
   };
@@ -62,7 +65,7 @@ async function main() {
     accountRegistry: "0xbC896A268C18FF2dC486eCa2af1A6242F74168AB",
     outbound: "0x094ac18DE374722750EcddB6Fff96AE499dD3BbD",
     inbound: "0xD4C043B643c696BA05A1d146D73c0e0A790d2744",
-    aUSDC: "0x75Cc4fDf1ee3E781C1A3Ee9151D5c6Ce34Cf5C61",
+    bridgingToken: "0x75Cc4fDf1ee3E781C1A3Ee9151D5c6Ce34Cf5C61", // aUSDC
     inputAmount: 0.2,
     gasToken: GasToken.FTM,
   };
@@ -87,6 +90,11 @@ async function main() {
     6
   );
 
+  // If you want to test a swap on the destination chain, set the ending token to
+  // some other token besides the bridging token
+  // const endingToken = "0x9999f7Fea5938fD3b1E26A12c3f2fb024e194f97";
+  const endingToken = destinationChainDetails.bridgingToken;
+
   // // // // // // // // // // // // // // // // // // // //
   // CONTRACTS
   // // // // // // // // // // // // // // // // // // // //
@@ -94,14 +102,14 @@ async function main() {
   const sugarcaneId = solidityPackedKeccak256(["string"], [deployer.address]);
 
   const sourceChain = sourceChainDetails.name;
-  const sourceTokenAddress = sourceChainDetails.aUSDC;
+  const sourceTokenAddress = sourceChainDetails.bridgingToken;
   const sourceGasToken = sourceChainDetails.gasToken;
   const outboundMailboxContractAddress = sourceChainDetails.outbound;
   const accountRegistryContractAddress = sourceChainDetails.accountRegistry;
 
   const destinationChain = destinationChainDetails.name;
   const destinationChainId = destinationChainDetails.chainId;
-  const destinationTokenAddress = destinationChainDetails.aUSDC;
+  const destinationTokenAddress = destinationChainDetails.bridgingToken;
 
   const sourceTokenContract = connect<IERC20>(
     sourceTokenAddress,
@@ -203,7 +211,7 @@ async function main() {
   console.log(transferTx);
 
   // // // // // // // // // // // // // // // // // // // //
-  // V1 CHAINS (FANTOM) FORMAT
+  // V1 CHAINS FORMAT
   // // // // // // // // // // // // // // // // // // // //
   bridgePayload = {
     // bytes32 sugarcaneId,
@@ -223,8 +231,11 @@ async function main() {
     // address destinationReceiverAddress,
     destinationReceiverAddress: destinationChainReceiver,
     // address destinationTokenAddress
-    destinationTokenAddress: destinationTokenAddress,
+    destinationTokenAddress: endingToken,
   };
+
+  console.log("\n-=-=-=- bridgePayload");
+  console.log(bridgePayload);
 
   bridgeTx = await outboundMailboxContractv1.bridgeSimple(
     // bytes32 sugarcaneId,
@@ -246,9 +257,6 @@ async function main() {
     // address destinationTokenAddress
     bridgePayload.destinationTokenAddress
   );
-
-  console.log("\n-=-=-=- bridgePayload");
-  console.log(bridgePayload);
 
   await bridgeTx.wait();
 
