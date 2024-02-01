@@ -2,42 +2,6 @@ export default [
   {
     inputs: [
       {
-        internalType: "uint256[]",
-        name: "axelarChainIdList",
-        type: "uint256[]",
-      },
-      {
-        internalType: "string[]",
-        name: "axelarChainNameList",
-        type: "string[]",
-      },
-      {
-        internalType: "uint256[]",
-        name: "mailboxChainIdList",
-        type: "uint256[]",
-      },
-      {
-        internalType: "address[]",
-        name: "mailboxInboundAddressList",
-        type: "address[]",
-      },
-      {
-        internalType: "address",
-        name: "addressStoreAddress",
-        type: "address",
-      },
-      {
-        internalType: "string",
-        name: "bridgeTokenSymbol",
-        type: "string",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "constructor",
-  },
-  {
-    inputs: [
-      {
         internalType: "address",
         name: "target",
         type: "address",
@@ -58,8 +22,34 @@ export default [
     type: "error",
   },
   {
+    inputs: [
+      {
+        internalType: "address",
+        name: "implementation",
+        type: "address",
+      },
+    ],
+    name: "ERC1967InvalidImplementation",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "ERC1967NonPayable",
+    type: "error",
+  },
+  {
     inputs: [],
     name: "FailedInnerCall",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidInitialization",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "NotInitializing",
     type: "error",
   },
   {
@@ -92,6 +82,22 @@ export default [
       },
     ],
     name: "StringsInsufficientHexLength",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "UUPSUnauthorizedCallContext",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "slot",
+        type: "bytes32",
+      },
+    ],
+    name: "UUPSUnsupportedProxiableUUID",
     type: "error",
   },
   {
@@ -252,6 +258,19 @@ export default [
     anonymous: false,
     inputs: [
       {
+        indexed: false,
+        internalType: "uint64",
+        name: "version",
+        type: "uint64",
+      },
+    ],
+    name: "Initialized",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
         indexed: true,
         internalType: "address",
         name: "operator",
@@ -308,6 +327,19 @@ export default [
       },
     ],
     name: "UpdatedMailboxChainDetails",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "implementation",
+        type: "address",
+      },
+    ],
+    name: "Upgraded",
     type: "event",
   },
   {
@@ -468,6 +500,19 @@ export default [
   },
   {
     inputs: [],
+    name: "PREFIX_MAILBOX_MESSAGE",
+    outputs: [
+      {
+        internalType: "bytes32",
+        name: "",
+        type: "bytes32",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "RR_DAPP_ADMIN_ROLE",
     outputs: [
       {
@@ -494,12 +539,38 @@ export default [
   },
   {
     inputs: [],
+    name: "RR_DAPP_UPGRADER_ROLE",
+    outputs: [
+      {
+        internalType: "bytes32",
+        name: "",
+        type: "bytes32",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "RR_STAGE_INITIATOR_ROLE",
     outputs: [
       {
         internalType: "bytes32",
         name: "",
         type: "bytes32",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "UPGRADE_INTERFACE_VERSION",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
       },
     ],
     stateMutability: "view",
@@ -671,6 +742,44 @@ export default [
       },
     ],
     name: "bridgeSimple",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256[]",
+        name: "axelarChainIdList",
+        type: "uint256[]",
+      },
+      {
+        internalType: "string[]",
+        name: "axelarChainNameList",
+        type: "string[]",
+      },
+      {
+        internalType: "uint256[]",
+        name: "mailboxChainIdList",
+        type: "uint256[]",
+      },
+      {
+        internalType: "address[]",
+        name: "mailboxInboundAddressList",
+        type: "address[]",
+      },
+      {
+        internalType: "address",
+        name: "addressStoreAddress",
+        type: "address",
+      },
+      {
+        internalType: "string",
+        name: "bridgeTokenSymbol",
+        type: "string",
+      },
+    ],
+    name: "initialize",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -850,6 +959,19 @@ export default [
   },
   {
     inputs: [],
+    name: "proxiableUUID",
+    outputs: [
+      {
+        internalType: "bytes32",
+        name: "",
+        type: "bytes32",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "roleRegistry",
     outputs: [
       {
@@ -970,6 +1092,24 @@ export default [
     name: "updateMailboxTargetInboundAddress",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "newImplementation",
+        type: "address",
+      },
+      {
+        internalType: "bytes",
+        name: "data",
+        type: "bytes",
+      },
+    ],
+    name: "upgradeToAndCall",
+    outputs: [],
+    stateMutability: "payable",
     type: "function",
   },
   {

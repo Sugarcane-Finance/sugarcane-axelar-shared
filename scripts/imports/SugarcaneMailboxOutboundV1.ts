@@ -11,6 +11,7 @@ import type {
   ContractMethod,
   Listener,
 } from "ethers";
+
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -35,9 +36,12 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
       | "AS_PAY_STATION_ADDRESS"
       | "AS_ROLE_REGISTRY_ADDRESS"
       | "AS_SYSTEM_STATUS_ADDRESS"
+      | "PREFIX_MAILBOX_MESSAGE"
       | "RR_DAPP_ADMIN_ROLE"
       | "RR_DAPP_PAUSER_ROLE"
+      | "RR_DAPP_UPGRADER_ROLE"
       | "RR_STAGE_INITIATOR_ROLE"
+      | "UPGRADE_INTERFACE_VERSION"
       | "accountRegistry"
       | "addAxelarChainDetails"
       | "addMailboxChainDetails"
@@ -46,6 +50,7 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
       | "axelarGasService"
       | "axelarGateway"
       | "bridgeSimple"
+      | "initialize"
       | "initializedAxelarChainIds"
       | "initializedAxelarChainNameHashes"
       | "initializedMailboxChainDetails"
@@ -57,6 +62,7 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
       | "outboundNonce"
       | "pausedDapp"
       | "payStation"
+      | "proxiableUUID"
       | "roleRegistry"
       | "swapRouter"
       | "systemStatus"
@@ -65,6 +71,7 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
       | "updateAxelarChainName"
       | "updateMailboxChainActiveStatus"
       | "updateMailboxTargetInboundAddress"
+      | "upgradeToAndCall"
       | "version"
       | "versionDapp"
   ): FunctionFragment;
@@ -75,8 +82,10 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
       | "AddedMailboxChainDetails"
       | "AddressStoreChanged"
       | "ExecutedBridge"
+      | "Initialized"
       | "UpdatedAxelarChainDetails"
       | "UpdatedMailboxChainDetails"
+      | "Upgraded"
   ): EventFragment;
 
   encodeFunctionData(
@@ -128,6 +137,10 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "PREFIX_MAILBOX_MESSAGE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "RR_DAPP_ADMIN_ROLE",
     values?: undefined
   ): string;
@@ -136,7 +149,15 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "RR_DAPP_UPGRADER_ROLE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "RR_STAGE_INITIATOR_ROLE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "UPGRADE_INTERFACE_VERSION",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -179,6 +200,17 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
       AddressLike,
       AddressLike,
       AddressLike,
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values: [
+      BigNumberish[],
+      string[],
+      BigNumberish[],
+      AddressLike[],
+      AddressLike,
+      string,
     ]
   ): string;
   encodeFunctionData(
@@ -226,6 +258,10 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "proxiableUUID",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "roleRegistry",
     values?: undefined
   ): string;
@@ -256,6 +292,10 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
   encodeFunctionData(
     functionFragment: "updateMailboxTargetInboundAddress",
     values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "upgradeToAndCall",
+    values: [AddressLike, BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "version", values?: undefined): string;
   encodeFunctionData(
@@ -312,6 +352,10 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "PREFIX_MAILBOX_MESSAGE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "RR_DAPP_ADMIN_ROLE",
     data: BytesLike
   ): Result;
@@ -320,7 +364,15 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "RR_DAPP_UPGRADER_ROLE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "RR_STAGE_INITIATOR_ROLE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "UPGRADE_INTERFACE_VERSION",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -355,6 +407,7 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
     functionFragment: "bridgeSimple",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "initializedAxelarChainIds",
     data: BytesLike
@@ -394,6 +447,10 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
   decodeFunctionResult(functionFragment: "pausedDapp", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "payStation", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "proxiableUUID",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "roleRegistry",
     data: BytesLike
   ): Result;
@@ -420,6 +477,10 @@ export interface SugarcaneMailboxOutboundV1Interface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "updateMailboxTargetInboundAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "upgradeToAndCall",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "version", data: BytesLike): Result;
@@ -544,6 +605,18 @@ export namespace ExecutedBridgeEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace InitializedEvent {
+  export type InputTuple = [version: BigNumberish];
+  export type OutputTuple = [version: bigint];
+  export interface OutputObject {
+    version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace UpdatedAxelarChainDetailsEvent {
   export type InputTuple = [
     operator: AddressLike,
@@ -587,6 +660,18 @@ export namespace UpdatedMailboxChainDetailsEvent {
     chainId: bigint;
     targetInboundAddress: string;
     isActive: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpgradedEvent {
+  export type InputTuple = [implementation: AddressLike];
+  export type OutputTuple = [implementation: string];
+  export interface OutputObject {
+    implementation: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -669,11 +754,17 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
 
   AS_SYSTEM_STATUS_ADDRESS: TypedContractMethod<[], [string], "view">;
 
+  PREFIX_MAILBOX_MESSAGE: TypedContractMethod<[], [string], "view">;
+
   RR_DAPP_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
 
   RR_DAPP_PAUSER_ROLE: TypedContractMethod<[], [string], "view">;
 
+  RR_DAPP_UPGRADER_ROLE: TypedContractMethod<[], [string], "view">;
+
   RR_STAGE_INITIATOR_ROLE: TypedContractMethod<[], [string], "view">;
+
+  UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
   accountRegistry: TypedContractMethod<[], [string], "view">;
 
@@ -721,6 +812,19 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
     "nonpayable"
   >;
 
+  initialize: TypedContractMethod<
+    [
+      axelarChainIdList: BigNumberish[],
+      axelarChainNameList: string[],
+      mailboxChainIdList: BigNumberish[],
+      mailboxInboundAddressList: AddressLike[],
+      addressStoreAddress: AddressLike,
+      bridgeTokenSymbol: string,
+    ],
+    [void],
+    "nonpayable"
+  >;
+
   initializedAxelarChainIds: TypedContractMethod<[], [bigint[]], "view">;
 
   initializedAxelarChainNameHashes: TypedContractMethod<[], [string[]], "view">;
@@ -763,6 +867,8 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
 
   payStation: TypedContractMethod<[], [string], "view">;
 
+  proxiableUUID: TypedContractMethod<[], [string], "view">;
+
   roleRegistry: TypedContractMethod<[], [string], "view">;
 
   swapRouter: TypedContractMethod<[], [string], "view">;
@@ -797,6 +903,12 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
     [chainId: BigNumberish, targetInboundAddress: AddressLike],
     [void],
     "nonpayable"
+  >;
+
+  upgradeToAndCall: TypedContractMethod<
+    [newImplementation: AddressLike, data: BytesLike],
+    [void],
+    "payable"
   >;
 
   version: TypedContractMethod<[], [[bigint, bigint, bigint]], "view">;
@@ -844,13 +956,22 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
     nameOrSignature: "AS_SYSTEM_STATUS_ADDRESS"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "PREFIX_MAILBOX_MESSAGE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "RR_DAPP_ADMIN_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "RR_DAPP_PAUSER_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "RR_DAPP_UPGRADER_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "RR_STAGE_INITIATOR_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "accountRegistry"
@@ -903,6 +1024,20 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "initialize"
+  ): TypedContractMethod<
+    [
+      axelarChainIdList: BigNumberish[],
+      axelarChainNameList: string[],
+      mailboxChainIdList: BigNumberish[],
+      mailboxInboundAddressList: AddressLike[],
+      addressStoreAddress: AddressLike,
+      bridgeTokenSymbol: string,
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "initializedAxelarChainIds"
   ): TypedContractMethod<[], [bigint[]], "view">;
   getFunction(
@@ -934,6 +1069,9 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
     nameOrSignature: "payStation"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "proxiableUUID"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "roleRegistry"
@@ -976,6 +1114,13 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "upgradeToAndCall"
+  ): TypedContractMethod<
+    [newImplementation: AddressLike, data: BytesLike],
+    [void],
+    "payable"
+  >;
+  getFunction(
     nameOrSignature: "version"
   ): TypedContractMethod<[], [[bigint, bigint, bigint]], "view">;
   getFunction(
@@ -1011,6 +1156,13 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
     ExecutedBridgeEvent.OutputObject
   >;
   getEvent(
+    key: "Initialized"
+  ): TypedContractEvent<
+    InitializedEvent.InputTuple,
+    InitializedEvent.OutputTuple,
+    InitializedEvent.OutputObject
+  >;
+  getEvent(
     key: "UpdatedAxelarChainDetails"
   ): TypedContractEvent<
     UpdatedAxelarChainDetailsEvent.InputTuple,
@@ -1023,6 +1175,13 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
     UpdatedMailboxChainDetailsEvent.InputTuple,
     UpdatedMailboxChainDetailsEvent.OutputTuple,
     UpdatedMailboxChainDetailsEvent.OutputObject
+  >;
+  getEvent(
+    key: "Upgraded"
+  ): TypedContractEvent<
+    UpgradedEvent.InputTuple,
+    UpgradedEvent.OutputTuple,
+    UpgradedEvent.OutputObject
   >;
 
   filters: {
@@ -1070,6 +1229,17 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
       ExecutedBridgeEvent.OutputObject
     >;
 
+    "Initialized(uint64)": TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+    Initialized: TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+
     "UpdatedAxelarChainDetails(address,uint256,string,bool)": TypedContractEvent<
       UpdatedAxelarChainDetailsEvent.InputTuple,
       UpdatedAxelarChainDetailsEvent.OutputTuple,
@@ -1090,6 +1260,17 @@ export interface SugarcaneMailboxOutboundV1 extends BaseContract {
       UpdatedMailboxChainDetailsEvent.InputTuple,
       UpdatedMailboxChainDetailsEvent.OutputTuple,
       UpdatedMailboxChainDetailsEvent.OutputObject
+    >;
+
+    "Upgraded(address)": TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
+    >;
+    Upgraded: TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
     >;
   };
 }
