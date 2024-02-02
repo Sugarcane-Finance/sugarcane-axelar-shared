@@ -18,9 +18,6 @@ import IERC20Abi from "./imports/IERC20.abi";
 import { IERC20 } from "./imports/IERC20";
 import { handleAssetStorageSlotApproval } from "./assetstorage";
 
-import { SugarcaneMailboxInboundV1 } from "./imports/SugarcaneMailboxInboundV1";
-import SugarcaneMailboxInboundV1Abi from "./imports/SugarcaneMailboxInboundV1.abi";
-
 // // // // // // // // // // // // // // // // // // // //
 // MAIN
 // // // // // // // // // // // // // // // // // // // //
